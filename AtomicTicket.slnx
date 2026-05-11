@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="AtomicTicket.Api/AtomicTicket.Api.csproj" />
+  <Project Path="AtomicTicket.SharedKernel/AtomicTicket.SharedKernel.csproj" />
+</Solution>
