@@ -7,11 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Persistence\Write\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\AtomicTicket.Application\AtomicTicket.Application.csproj" />
+    <ProjectReference Include="..\AtomicTicket.Contracts\AtomicTicket.Contracts.csproj" />
+    <ProjectReference Include="..\AtomicTicket.Domain\AtomicTicket.Domain.csproj" />
   </ItemGroup>
 
 </Project>

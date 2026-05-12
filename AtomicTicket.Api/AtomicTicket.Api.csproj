@@ -15,4 +15,10 @@
     <Folder Include="Controllers\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\AtomicTicket.Application\AtomicTicket.Application.csproj" />
+    <ProjectReference Include="..\AtomicTicket.Contracts\AtomicTicket.Contracts.csproj" />
+    <ProjectReference Include="..\AtomicTicket.Infrastructure\AtomicTicket.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>
