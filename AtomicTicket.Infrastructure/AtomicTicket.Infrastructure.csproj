@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <UserSecretsId>f0fca203-17ee-4da7-a0ac-b952c036e630</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +13,13 @@
 
   <ItemGroup>
     <Folder Include="Persistence\Write\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.8" />
+    <PackageReference Include="MongoDB.Driver" Version="3.8.1" />
+    <PackageReference Include="SharpCompress" Version="0.48.0" />
   </ItemGroup>
 
 </Project>
