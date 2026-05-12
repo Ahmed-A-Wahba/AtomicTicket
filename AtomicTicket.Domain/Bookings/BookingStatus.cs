@@ -1,9 +1,8 @@
-﻿namespace AtomicTicket.Domain.Bookings
+﻿namespace AtomicTicket.Domain.Bookings;
+
+public enum BookingStatus
 {
-    public enum BookingStatus
-    {
-        Pending,
-        Confirmed,
-        Cancelled
-    }
+    Pending,
+    Confirmed,
+    Cancelled
 }
