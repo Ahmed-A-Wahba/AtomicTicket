@@ -10,7 +10,7 @@ public sealed class Ticket : Entity<Guid>
     public int TotalQuantity { get; private set; }
     public int Remaining { get; private set; }
     public bool IsAvailable { get; private set; }
-    public byte[] Bytes { get; private set; } = [];
+    public byte[] RowVersion { get; private set; } = [];
 
     private Ticket(
         TicketType type,

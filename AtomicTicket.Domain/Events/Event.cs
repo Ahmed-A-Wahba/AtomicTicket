@@ -11,7 +11,7 @@ public sealed class Event : AggregateRoot<Guid>
     public Venue Venue { get; private set; }
     public EventStatus Status { get; private set; }
     public DateTimeOffset Date { get; private set; }
-    public byte[] Bytes { get; private set; } = [];
+    public byte[] RowVersion { get; private set; } = [];
 
     private readonly List<Ticket> _tickets = [];
     public IReadOnlyList<Ticket> Tickets => _tickets.AsReadOnly();

@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="AtomicTicket.Api/AtomicTicket.Api.csproj" />
   <Project Path="AtomicTicket.Domain/AtomicTicket.Domain.csproj" Id="39d8d95c-b91e-400a-97c4-53e84e73d43f" />
+  <Project Path="AtomicTicket.Infrastructure/AtomicTicket.Infrastructure.csproj" Id="f78bc7fa-2849-45f4-ab10-c7e4c39db347" />
   <Project Path="AtomicTicket.SharedKernel/AtomicTicket.SharedKernel.csproj" />
 </Solution>
