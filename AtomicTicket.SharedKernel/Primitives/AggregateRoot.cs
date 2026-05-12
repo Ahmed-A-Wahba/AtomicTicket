@@ -2,7 +2,7 @@
 
 namespace AtomicTicket.SharedKernel.Primitives;
 
-public abstract class AggregateRoot<TKey> : Entity<TKey>
+public abstract class AggregateRoot<TKey>(TKey id) : Entity<TKey>(id) where TKey : notnull
 {
     private readonly List<IDomainEvent> _domainEvents = [];
 

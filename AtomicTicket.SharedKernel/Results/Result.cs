@@ -33,6 +33,7 @@ public class Result<TValue> : Result
 
     public static implicit operator Result<TValue>(TValue value) => new(value);
     public static implicit operator Result<TValue>(Error error) => new(error);
+    public static implicit operator Result<TValue>(Error[] errors) => new(errors);
 
     public TNextValue Match<TNextValue>(
         Func<TValue, TNextValue> onSuccess,
