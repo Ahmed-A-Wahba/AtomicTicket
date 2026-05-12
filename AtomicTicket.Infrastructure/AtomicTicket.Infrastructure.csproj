@@ -4,15 +4,14 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UserSecretsId>f0fca203-17ee-4da7-a0ac-b952c036e630</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AtomicTicket.Domain\AtomicTicket.Domain.csproj" />
+    <Folder Include="Persistence\Write\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Persistence\Write\" />
+    <ProjectReference Include="..\AtomicTicket.Application\AtomicTicket.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
