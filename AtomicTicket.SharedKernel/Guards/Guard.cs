@@ -14,7 +14,7 @@ public static class Guard
     }
 
     public static void AgainstNullOrEmpty(string? value,
-        [CallerArgumentExpression("value")] string? parameterName = null)
+        [CallerArgumentExpression(nameof(value))] string? parameterName = null)
     {
         if (string.IsNullOrEmpty(value))
         {

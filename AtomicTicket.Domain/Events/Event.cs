@@ -6,6 +6,7 @@ namespace AtomicTicket.Domain.Events;
 
 public sealed class Event : AggregateRoot<Guid>
 {
+    public Guid UserId { get; init; }
     public string Title { get; private set; }
     public string Description { get; private set; }
     public Venue Venue { get; private set; }
@@ -17,6 +18,7 @@ public sealed class Event : AggregateRoot<Guid>
     public IReadOnlyList<Ticket> Tickets => _tickets.AsReadOnly();
 
     public static Result<Event> Create(
+        Guid userId,
         string title,
         string description,
         Venue venue,
@@ -42,10 +44,21 @@ public sealed class Event : AggregateRoot<Guid>
             return Error.Validation("Event.InvalidDate", "Event date must be in the future.");
 
         var eventAggregate = new Event(
+            userId,
             title.Trim(),
             description.Trim(),
             venue,
             date);
+
+        eventAggregate.RaiseDomainEvent(
+            new EventCreatedDomainEvent(
+                eventAggregate.Id,
+                eventAggregate.UserId,
+                eventAggregate.Title,
+                eventAggregate.Description,
+                eventAggregate.Venue,
+                eventAggregate.Date
+            ));
 
         return eventAggregate;
     }
@@ -166,12 +179,14 @@ public sealed class Event : AggregateRoot<Guid>
     public int TotalRemainingTickets => _tickets.Sum(t => t.Remaining);
 
     private Event(
+        Guid userId,
         string title,
         string description,
         Venue venue,
         DateTimeOffset date)
         : base(Guid.CreateVersion7())
     {
+        UserId = userId;
         Title = title;
         Description = description;
         Venue = venue;

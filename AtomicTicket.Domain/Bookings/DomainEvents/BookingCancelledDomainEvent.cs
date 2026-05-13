@@ -1,7 +1,4 @@
 ﻿using AtomicTicket.SharedKernel.Domain;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace AtomicTicket.Domain.Bookings.DomainEvents
 {

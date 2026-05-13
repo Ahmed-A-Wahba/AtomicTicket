@@ -3,7 +3,7 @@ using MongoDB.Driver;
 
 namespace AtomicTicket.Infrastructure.Persistence.Read;
 
-public class MongoDbContext
+internal class MongoDbContext
 {
     private readonly IMongoDatabase _database;
     public MongoDbContext(string connectionString, string databaseName)
