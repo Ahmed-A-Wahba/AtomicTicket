@@ -1,6 +1,7 @@
 ﻿using AtomicTicket.Infrastructure.Persistence.Write;
 using AtomicTicket.SharedKernel.Domain;
 using DnsClient.Internal;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Quartz;
@@ -10,6 +11,7 @@ namespace AtomicTicket.Infrastructure.Outbox;
 [DisallowConcurrentExecution]
 internal sealed class OutboxProcessor(
     ApplicationDbContext dbContext,
+    IPublisher publisher,
     ILogger logger) : IJob
 {
     public async Task Execute(IJobExecutionContext context)
@@ -23,18 +25,35 @@ internal sealed class OutboxProcessor(
         {
             try
             {
-                var domainEvent = JsonConvert
-                    .DeserializeObject<IDomainEvent>(message.Content);
-
-                if (domainEvent is null)
+                if (message.EventKind == EventKind.Domain)
                 {
-                    logger.LogError("Failed to deserialize outbox message with ID: {MessageId}. Content: {Content}", message.Id, message.Content);
-                    message.Error = "Deserialization returned null";
+                    var domainEvent = JsonConvert.DeserializeObject<IDomainEvent>(message.Content);
 
-                    continue;
+                    if (domainEvent == null)
+                    {
+                        logger.LogError("Failed to deserialize outbox message with ID: {MessageId}. Content: {Content}", message.Id, message.Content);
+                        message.Error = "Deserialization returned null";
+                    }
+                    else
+                    {
+                        await publisher.Publish(domainEvent, context.CancellationToken);
+                    }
                 }
 
-                // قولي اي اللي اعمله هنا بقي 
+                else if (message.EventKind == EventKind.Integration)
+                {
+                    var integrationEvent = JsonConvert.DeserializeObject<IIntegrationEvent>(message.Content);
+
+                    if (integrationEvent == null)
+                    {
+                        logger.LogError("Failed to deserialize outbox message with ID: {MessageId}. Content: {Content}", message.Id, message.Content);
+                        message.Error = "Deserialization returned null";
+                    }
+                    else
+                    {
+                        //await publisher.Publish(domainEvent, context.CancellationToken);
+                    }
+                }
 
                 message.ProcessedOnUtc = DateTime.UtcNow;
 

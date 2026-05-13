@@ -29,7 +29,8 @@ public sealed class OutboxDomainEventInterceptor : SaveChangesInterceptor
                         new JsonSerializerSettings
                         {
                             TypeNameHandling = TypeNameHandling.All
-                        })
+                        }),
+                    EventKind = EventKind.Domain
                 })
                 .ToList();
 
