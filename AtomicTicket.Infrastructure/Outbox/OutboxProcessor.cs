@@ -1,25 +1,41 @@
-﻿using AtomicTicket.Infrastructure.Persistence.Write;
+﻿using AtomicTicket.Application.Abstractions;
+using AtomicTicket.Infrastructure.Outbox;
+using AtomicTicket.Infrastructure.Persistence.Write;
 using AtomicTicket.SharedKernel.Domain;
-using DnsClient.Internal;
+using AtomicTicket.SharedKernel.Primitives;
+using MassTransit.Transports;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Quartz;
 
-namespace AtomicTicket.Infrastructure.Outbox;
-
 [DisallowConcurrentExecution]
 internal sealed class OutboxProcessor(
-    ApplicationDbContext dbContext,
-    IPublisher publisher,
-    ILogger logger) : IJob
+    IServiceScopeFactory scopeFactory,
+    ILogger<OutboxProcessor> logger) : IJob
 {
+    private static readonly JsonSerializerSettings _settings = new()
+    {
+        TypeNameHandling = TypeNameHandling.All
+    };
+
     public async Task Execute(IJobExecutionContext context)
     {
+        logger.LogInformation("Processing outbox messages...");
+        using var scope = scopeFactory.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
+        var eventBus = scope.ServiceProvider.GetService<IEventBus>();
+
         var messages = await dbContext.Set<OutboxMessage>()
-        .Where(m => m.ProcessedOnUtc == null)
-        .Take(20)
-        .ToListAsync(context.CancellationToken);
+            .Where(m => m.ProcessedOnUtc == null && m.Error == null)
+            .OrderBy(m => m.OccurredOnUtc)
+            .Take(20)
+            .ToListAsync(context.CancellationToken);
+
+        if (messages.Count == 0) return;
 
         foreach (var message in messages)
         {
@@ -27,44 +43,31 @@ internal sealed class OutboxProcessor(
             {
                 if (message.EventKind == EventKind.Domain)
                 {
-                    var domainEvent = JsonConvert.DeserializeObject<IDomainEvent>(message.Content);
+                    var domainEvent = JsonConvert.DeserializeObject<object>(message.Content, _settings) as IDomainEvent;
 
-                    if (domainEvent == null)
-                    {
-                        logger.LogError("Failed to deserialize outbox message with ID: {MessageId}. Content: {Content}", message.Id, message.Content);
-                        message.Error = "Deserialization returned null";
-                    }
-                    else
+                    if (domainEvent is not null)
                     {
                         await publisher.Publish(domainEvent, context.CancellationToken);
                     }
                 }
-
                 else if (message.EventKind == EventKind.Integration)
                 {
-                    var integrationEvent = JsonConvert.DeserializeObject<IIntegrationEvent>(message.Content);
+                    var integrationEvent = JsonConvert.DeserializeObject<object>(message.Content, _settings) as IIntegrationEvent;
 
-                    if (integrationEvent == null)
+                    if (integrationEvent is not null)
                     {
-                        logger.LogError("Failed to deserialize outbox message with ID: {MessageId}. Content: {Content}", message.Id, message.Content);
-                        message.Error = "Deserialization returned null";
-                    }
-                    else
-                    {
-                        //await publisher.Publish(domainEvent, context.CancellationToken);
+                        await eventBus!.PublishAsync(integrationEvent,  context.CancellationToken);
                     }
                 }
 
                 message.ProcessedOnUtc = DateTime.UtcNow;
-
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Exception occurred while processing outbox message {MessageId}", message.Id);
+                logger.LogError(ex, "Failed to process outbox message {MessageId}", message.Id);
                 message.Error = ex.Message;
             }
-
-            await dbContext.SaveChangesAsync(context.CancellationToken);
         }
+        await dbContext.SaveChangesAsync(context.CancellationToken);
     }
 }

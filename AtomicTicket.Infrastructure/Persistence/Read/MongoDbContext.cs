@@ -3,14 +3,9 @@ using MongoDB.Driver;
 
 namespace AtomicTicket.Infrastructure.Persistence.Read;
 
-internal class MongoDbContext
+public class MongoDbContext(IMongoClient client, string databaseName)
 {
-    private readonly IMongoDatabase _database;
-    public MongoDbContext(string connectionString, string databaseName)
-    {
-        var client = new MongoClient(connectionString);
-        _database = client.GetDatabase(databaseName);
-    }
+    private readonly IMongoDatabase _database = client.GetDatabase(databaseName);
 
     public IMongoCollection<EventReadModel> Events => _database.GetCollection<EventReadModel>("Events");
 }

@@ -1,6 +1,10 @@
-﻿using AtomicTicket.Domain.Repositories;
-using AtomicTicket.Infrastructure.Outbox;
+﻿using AtomicTicket.Application.Abstractions;
+using AtomicTicket.Application.Common.Interfaces.Repositories;
+using AtomicTicket.Domain.Repositories;
+using AtomicTicket.Infrastructure.Messaging;
+using AtomicTicket.Infrastructure.Messaging.Consumers;
 using AtomicTicket.Infrastructure.Persistence.Read;
+using AtomicTicket.Infrastructure.Persistence.Read.Repositories;
 using AtomicTicket.Infrastructure.Persistence.Write;
 using AtomicTicket.Infrastructure.Persistence.Write.Interceptors;
 using AtomicTicket.Infrastructure.Persistence.Write.Repositories;
@@ -9,6 +13,10 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver;
 using Quartz;
 
 namespace AtomicTicket.Infrastructure;
@@ -36,20 +44,31 @@ public static class DependencyInjection
         });
         services.AddSingleton<OutboxDomainEventInterceptor>();
 
-
-        services.AddSingleton(sp =>
+        BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+        services.AddSingleton<IMongoClient>(sp =>
         {
             var connectionString = configuration.GetConnectionString("ReadModelConnection");
             Guard.AgainstNullOrEmpty(connectionString);
 
+            return new MongoClient(connectionString);
+        });
+
+        services.AddScoped(sp =>
+        {
             var dbName = configuration["MongoSettings:DatabaseName"];
             Guard.AgainstNullOrEmpty(dbName);
 
-            return new MongoDbContext(connectionString!, dbName!);
+            var client = sp.GetRequiredService<IMongoClient>();
+
+            return new MongoDbContext(client, dbName!);
         });
 
+        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
         services.AddScoped<IEventRepository, EventRepository>();
+
+
+        services.AddScoped<IReadEventRepository, ReadEventRepository>();
 
         return services;
     }
@@ -60,16 +79,22 @@ public static class DependencyInjection
         {
             var jobKey = new JobKey(nameof(OutboxProcessor));
 
-            configuration.AddJob<OutboxProcessor>(jobKey).AddTrigger(trigger => trigger.ForJob(jobKey).WithSimpleSchedule(schedule => schedule.WithIntervalInSeconds(10).RepeatForever()));
+            configuration.AddJob<OutboxProcessor>(jobKey).AddTrigger(trigger => trigger.ForJob(jobKey).WithSimpleSchedule(schedule => schedule.WithIntervalInSeconds(1).RepeatForever()));
         });
+
+        services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
+
+        services.AddTransient<IEventBus, MassTransitEventBus>();
 
         services.AddMassTransit(busConfigurator =>
         {
             busConfigurator.SetKebabCaseEndpointNameFormatter();
 
+            busConfigurator.AddConsumers(typeof(DependencyInjection).Assembly);
+
             busConfigurator.UsingRabbitMq((context, cfg) =>
             {
-                cfg.Host("localhost", "/");
+                cfg.Host("localhost");
                 cfg.ConfigureEndpoints(context);
             });
         });

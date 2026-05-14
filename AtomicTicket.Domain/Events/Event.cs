@@ -7,9 +7,9 @@ namespace AtomicTicket.Domain.Events;
 public sealed class Event : AggregateRoot<Guid>
 {
     public Guid UserId { get; init; }
-    public string Title { get; private set; }
-    public string Description { get; private set; }
-    public Venue Venue { get; private set; }
+    public string Title { get; private set; } = string.Empty;
+    public string Description { get; private set; } = string.Empty;
+    public Venue Venue { get; private set; } = default!;
     public EventStatus Status { get; private set; }
     public DateTimeOffset Date { get; private set; }
     public byte[] RowVersion { get; private set; } = [];
@@ -56,7 +56,9 @@ public sealed class Event : AggregateRoot<Guid>
                 eventAggregate.UserId,
                 eventAggregate.Title,
                 eventAggregate.Description,
-                eventAggregate.Venue,
+                eventAggregate.Venue.Name,
+                eventAggregate.Venue.Address,
+                eventAggregate.Venue.Capacity,
                 eventAggregate.Date
             ));
 
@@ -193,4 +195,6 @@ public sealed class Event : AggregateRoot<Guid>
         Date = date;
         Status = EventStatus.Draft;
     }
+
+    private Event() : base(Guid.Empty) { }
 }

@@ -32,4 +32,6 @@ public sealed record Venue : ValueObject
         Address = address;
         Capacity = capacity;
     }
+
+    private Venue() { }
 }

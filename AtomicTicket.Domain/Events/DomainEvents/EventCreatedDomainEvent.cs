@@ -8,6 +8,8 @@ public sealed record EventCreatedDomainEvent
     Guid UserId,
     string Title,
     string Description,
-    Venue Venue,
+    string VenueName,
+    string VenueAddress,
+    int VenueCapacity,
     DateTimeOffset ScheduledAt
 ) : IDomainEvent;

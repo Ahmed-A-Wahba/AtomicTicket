@@ -6,7 +6,7 @@ namespace AtomicTicket.Domain.Events;
 public sealed class Ticket : Entity<Guid>
 {
     public TicketType Type { get; private set; }
-    public Money Price { get; private set; }
+    public Money Price { get; private set; } = default!;
     public int TotalQuantity { get; private set; }
     public int Remaining { get; private set; }
     public bool IsAvailable { get; private set; }
@@ -73,4 +73,6 @@ public sealed class Ticket : Entity<Guid>
     {
         IsAvailable = false;
     }
+
+    private Ticket() : base(Guid.Empty) { }
 }

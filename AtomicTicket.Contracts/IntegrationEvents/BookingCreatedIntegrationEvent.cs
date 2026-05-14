@@ -1,5 +1,7 @@
-﻿namespace AtomicTicket.Contracts.IntegrationEvents;
+﻿using AtomicTicket.SharedKernel.Primitives;
 
-public class BookingCreatedIntegrationEvent
-{
-}
+namespace AtomicTicket.Contracts.IntegrationEvents;
+
+public sealed record BookingCreatedIntegrationEvent
+(
+) : IIntegrationEvent;

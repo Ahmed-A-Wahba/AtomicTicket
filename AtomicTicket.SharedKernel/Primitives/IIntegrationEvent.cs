@@ -1,5 +1,3 @@
 ﻿namespace AtomicTicket.SharedKernel.Primitives;
 
-internal interface IIntegrationEvent
-{
-}
+public interface IIntegrationEvent;

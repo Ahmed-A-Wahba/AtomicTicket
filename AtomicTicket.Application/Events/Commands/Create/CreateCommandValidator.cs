@@ -2,9 +2,9 @@
 
 namespace AtomicTicket.Application.Events.Commands.Create;
 
-internal sealed class CreateEventCommandValidator : AbstractValidator<CreateEventCommand>
+public sealed class CreateEventCommandValidator : AbstractValidator<CreateEventCommand>
 {
-    internal CreateEventCommandValidator()
+    public CreateEventCommandValidator()
     {
         RuleFor(c => c.Title)
             .NotEmpty()

@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\AtomicTicket.SharedKernel\AtomicTicket.SharedKernel.csproj" />
+  </ItemGroup>
+
 </Project>
