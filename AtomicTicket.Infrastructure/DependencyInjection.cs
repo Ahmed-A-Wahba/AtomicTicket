@@ -3,6 +3,7 @@ using AtomicTicket.Application.Common.Interfaces.Repositories;
 using AtomicTicket.Domain.Repositories;
 using AtomicTicket.Infrastructure.Messaging;
 using AtomicTicket.Infrastructure.Messaging.Consumers;
+using AtomicTicket.Infrastructure.Outbox;
 using AtomicTicket.Infrastructure.Persistence.Read;
 using AtomicTicket.Infrastructure.Persistence.Read.Repositories;
 using AtomicTicket.Infrastructure.Persistence.Write;
@@ -77,9 +78,16 @@ public static class DependencyInjection
     {
         services.AddQuartz(configuration =>
         {
-            var jobKey = new JobKey(nameof(OutboxProcessor));
+            var jobKey = new JobKey(nameof(DomainEventOutboxProcessor));
 
-            configuration.AddJob<OutboxProcessor>(jobKey).AddTrigger(trigger => trigger.ForJob(jobKey).WithSimpleSchedule(schedule => schedule.WithIntervalInSeconds(1).RepeatForever()));
+            configuration.AddJob<DomainEventOutboxProcessor>(jobKey).AddTrigger(trigger => trigger.ForJob(jobKey).WithSimpleSchedule(schedule => schedule.WithIntervalInSeconds(1).RepeatForever()));
+        });
+
+        services.AddQuartz(configuration =>
+        {
+            var jobKey = new JobKey(nameof(IntegrationEventOutboxProcessor));
+
+            configuration.AddJob<IntegrationEventOutboxProcessor>(jobKey).AddTrigger(trigger => trigger.ForJob(jobKey).WithSimpleSchedule(schedule => schedule.WithIntervalInSeconds(1).RepeatForever()));
         });
 
         services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);

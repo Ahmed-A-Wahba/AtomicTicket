@@ -1,20 +1,16 @@
-﻿using AtomicTicket.Application.Abstractions;
-using AtomicTicket.Infrastructure.Outbox;
+﻿using AtomicTicket.Infrastructure.Outbox;
 using AtomicTicket.Infrastructure.Persistence.Write;
-using AtomicTicket.SharedKernel.Domain;
-using AtomicTicket.SharedKernel.Primitives;
-using MassTransit.Transports;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Quartz;
+using System.Linq.Expressions;
 
 [DisallowConcurrentExecution]
-internal sealed class OutboxProcessor(
+internal abstract class OutboxProcessorBase(
     IServiceScopeFactory scopeFactory,
-    ILogger<OutboxProcessor> logger) : IJob
+    ILogger<OutboxProcessorBase> logger) : IJob
 {
     private static readonly JsonSerializerSettings _settings = new()
     {
@@ -26,8 +22,6 @@ internal sealed class OutboxProcessor(
         logger.LogInformation("Processing outbox messages...");
         using var scope = scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
-        var eventBus = scope.ServiceProvider.GetService<IEventBus>();
 
         var messages = await dbContext.Set<OutboxMessage>()
             .Where(m => m.ProcessedOnUtc == null && m.Error == null)
@@ -41,24 +35,7 @@ internal sealed class OutboxProcessor(
         {
             try
             {
-                if (message.EventKind == EventKind.Domain)
-                {
-                    var domainEvent = JsonConvert.DeserializeObject<object>(message.Content, _settings) as IDomainEvent;
-
-                    if (domainEvent is not null)
-                    {
-                        await publisher.Publish(domainEvent, context.CancellationToken);
-                    }
-                }
-                else if (message.EventKind == EventKind.Integration)
-                {
-                    var integrationEvent = JsonConvert.DeserializeObject<object>(message.Content, _settings) as IIntegrationEvent;
-
-                    if (integrationEvent is not null)
-                    {
-                        await eventBus!.PublishAsync(integrationEvent,  context.CancellationToken);
-                    }
-                }
+                await ProcessAndPublishEventAsync(message, scope.ServiceProvider, context.CancellationToken);
 
                 message.ProcessedOnUtc = DateTime.UtcNow;
             }
@@ -70,4 +47,8 @@ internal sealed class OutboxProcessor(
         }
         await dbContext.SaveChangesAsync(context.CancellationToken);
     }
+
+    protected abstract Expression<Func<OutboxMessage, bool>> GetMessageFilter();
+    protected abstract Task ProcessAndPublishEventAsync(OutboxMessage message, IServiceProvider serviceProvider, CancellationToken cancellationToken);
+    protected static object? DeserializeContent(string content) => JsonConvert.DeserializeObject<object>(content, _settings);
 }
