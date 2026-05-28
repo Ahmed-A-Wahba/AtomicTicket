@@ -25,6 +25,7 @@ internal abstract class OutboxProcessorBase(
 
         var messages = await dbContext.Set<OutboxMessage>()
             .Where(m => m.ProcessedOnUtc == null && m.Error == null)
+            .Where(GetMessageFilter())
             .OrderBy(m => m.OccurredOnUtc)
             .Take(20)
             .ToListAsync(context.CancellationToken);
